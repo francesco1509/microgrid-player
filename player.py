@@ -5,6 +5,7 @@ import numpy as np
 import pandas
 import gurobipy as gp
 from gurobipy import GRB
+import pulp
 
 path= r'C:\SERIOUS_GAME\data_center_scenarios.csv'
 df=pandas.read_csv(path,sep=';')
@@ -79,15 +80,16 @@ class Player:
         
         # lp = pulp.LpProblem('data_center', pulp.LpMinimize)
         # lp.setSolver()
-        # add_cons = {}
+        # vars={}
+        # # add_cons = {}
         # for t in range(self.horizon):
         #     var_name='lhp'+str(t)
-        #     add_cons[t]=pulp.LpVariable(var_name, 0.0, 10/self.cop_hp )
+        #     vars[t]=pulp.LpVariable(var_name, 0.0, 10/(self.cop_hp*pt ))
         
-        # lp.setObjective(pulp.lpSum([self.prices[t]*(self.nonflex[t]+add_cons[t]) for t in range(self.horizon)])\
-        # -pulp.lpSum([self.prices_hw[t]*self.cop_hp*add_cons[t] for t in range(self.horizon)])  )
-        # model=Model(lp,add_cons)
-        # solve(model,'data_center')
+        # lp.setObjective(pulp.lpSum([self.prices[t]*(self.nonflex[t]+vars[t])-self.prices_hw[t]*self.cop_hp*vars[t] for t in range(self.horizon)]))
+        
+        # a=lp.solve()
+        # print(a)
         # results=getResultsModel(pb,model,pb_name)
         # printResults(pb, model, 'data_center',[],results)
         m=gp.Model()
