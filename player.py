@@ -1,14 +1,11 @@
-# python 3
-# this class combines all basic features of a generic player
-
 import numpy as np
-import pandas
-import gurobipy as gp
-from gurobipy import GRB
+import pandas as pd
+import matplotlib
 import pulp
 
-path= r'C:\SERIOUS_GAME\data_center_scenarios.csv'
-df=pandas.read_csv(path,sep=';')
+
+path= r'C:\Users\CATHERINE\Desktop\data_center_scenarios.csv'
+df=pd.read_csv(path,sep=';')
 print(df.head)
 df_scenar1=df[df["scenario"]==1].copy()
 print(df_scenar1['cons (kW)'][1])
@@ -62,7 +59,7 @@ class Player:
         return self.sol[time]*(self.cop_hp-1)*pt/(self.cop_cs*pt*self.data['cons (kW)'][time])
         
     # TO BE COMPLETED
-        return 0
+        
     
     def compute_flex_cons(self):
         self.flex_cons=np.zeros(self.horizon)
@@ -78,36 +75,20 @@ class Player:
     def global_decision(self):
         self.alpha=np.zeros(48)
         
-        # lp = pulp.LpProblem('data_center', pulp.LpMinimize)
-        # lp.setSolver()
-        # vars={}
-        # # add_cons = {}
-        # for t in range(self.horizon):
-        #     var_name='lhp'+str(t)
-        #     vars[t]=pulp.LpVariable(var_name, 0.0, 10/(self.cop_hp*pt ))
+        lp = pulp.LpProblem('data_center', pulp.LpMinimize)
+        lp.setSolver()
+        add_cons = {}
+        for t in range(self.horizon):
+            var_name='lhp'+str(t)
+            add_cons[t]=pulp.LpVariable(var_name, 0.0, 10/self.cop_hp )
         
-        # lp.setObjective(pulp.lpSum([self.prices[t]*(self.nonflex[t]+vars[t])-self.prices_hw[t]*self.cop_hp*vars[t] for t in range(self.horizon)]))
-        
-        # a=lp.solve()
-        # print(a)
-        # results=getResultsModel(pb,model,pb_name)
-        # printResults(pb, model, 'data_center',[],results)
-        m=gp.Model()
-        vars = m.addVars(self.horizon,lb=0.0,ub=10/(self.cop_hp*pt),vtype=GRB.CONTINUOUS, name='e')
-        m.setObjective(sum(self.prices[t]*(self.nonflex[t]+vars[t])-self.prices_hw[t]*self.cop_hp*vars[t] for t in range(self.horizon)), GRB.MINIMIZE)
-        m.optimize()
-        self.sol=np.zeros(48)
-        for j in range(self.horizon):
-            print(j,vars[j].X)
-            self.sol[j]=vars[j].X
-            
-        return self.sol
-    def compute_all_load(self):
-        load = self.global_decision(self)
-            # for time in range(self.horizon):
-             # 	load[time] = self.compute_load(time)
-        return load
-            
+        lp.setObjective(pulp.lpSum([self.prices[t]*(self.nonflex[t]+add_cons[t]) for t in range(self.horizon)])\
+        -pulp.lpSum([self.prices_hw[t]*self.cop_hp*add_cons[t] for t in range(self.horizon)])  )
+        model=pd.Model(lp,add_cons)
+        pd.solve(model,'data_center')
+        results=pd.getResultsModel(lp,model,'data_center')
+        pd.printResults(lp, model, 'data_center',[],results)
+   
             
             
         
@@ -120,13 +101,13 @@ class Player:
     def reset(self):
         # reset all observed data
         pass
+        
     
     
-    
-    
+_name__='main'
     
 #####test
-if __name__=='__main__':
+if _name__=='__main_':
     X=Player()
     X.set_scenario(df_scenar1)
     X.set_prices(random_lambda)
